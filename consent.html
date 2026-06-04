@@ -1,0 +1,1609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Keepdots — Address Verification</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #F5F6F8;
+            --bg-card: #FFFFFF;
+            --bg-elevated: #FFFFFF;
+            --text-primary: #0A0D14;
+            --text-secondary: #4B5563;
+            --text-tertiary: #9CA3AF;
+            --border-light: #E5E7EB;
+            --border-subtle: #F3F4F6;
+            --orgbyte-blue: #2563EB;
+            --orgbyte-blue-light: #EFF6FF;
+            --orgbyte-blue-dark: #1D4ED8;
+            --accent-green: #10B981;
+            --accent-green-bg: #ECFDF5;
+            --accent-green-text: #059669;
+            --accent-green-dark: #047857;
+            --accent-amber: #F59E0B;
+            --accent-amber-bg: #FFFBEB;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.02);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.04), 0 2px 4px -1px rgba(0,0,0,0.02);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.04), 0 4px 6px -2px rgba(0,0,0,0.02);
+            --radius-sm: 12px;
+            --radius-md: 16px;
+            --radius-lg: 20px;
+            --radius-xl: 24px;
+            --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-base: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        html {
+            font-size: 16px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #E8EAED;
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 24px 16px;
+            line-height: 1.5;
+        }
+
+        /* Phone Frame */
+        .phone-frame {
+            width: 100%;
+            max-width: 375px;
+            background: var(--bg-body);
+            border-radius: 48px;
+            box-shadow: 
+                0 0 0 8px #1C1C1E,
+                0 0 0 10px #2C2C2E,
+                0 25px 50px -12px rgba(0,0,0,0.25),
+                0 0 0 1px rgba(255,255,255,0.08) inset;
+            overflow: hidden;
+            position: relative;
+            min-height: 812px;
+        }
+
+        .phone-frame::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 126px;
+            height: 32px;
+            background: #1C1C1E;
+            border-bottom-left-radius: 18px;
+            border-bottom-right-radius: 18px;
+            z-index: 100;
+        }
+
+        .phone-frame::after {
+            content: '';
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 134px;
+            height: 5px;
+            background: #3A3A3C;
+            border-radius: 10px;
+            z-index: 100;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            height: 44px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            padding: 0 28px 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            position: relative;
+            z-index: 50;
+        }
+
+        .status-icons {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-icons svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Scroll Container */
+        .scroll-container {
+            height: calc(812px - 44px - 8px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            padding-bottom: 40px;
+        }
+
+        .scroll-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Header */
+        .header {
+            padding: 8px 20px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--orgbyte-blue);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon svg {
+            width: 16px;
+            height: 16px;
+            color: white;
+        }
+
+        .logo-text {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.3px;
+        }
+
+        .secure-badge {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: var(--accent-green-bg);
+            color: var(--accent-green-text);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 100px;
+        }
+
+        .secure-badge svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* Stepper */
+        .stepper {
+            padding: 0 20px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .step-circle {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            transition: var(--transition-base);
+        }
+
+        .step-circle.completed {
+            background: var(--accent-green);
+            color: white;
+        }
+
+        .step-circle.completed svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .step-circle.active {
+            background: var(--orgbyte-blue);
+            color: white;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        .step-circle.pending {
+            background: var(--border-subtle);
+            color: var(--text-tertiary);
+        }
+
+        .step-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            transition: var(--transition-base);
+        }
+
+        .step-label.active {
+            color: var(--text-primary);
+        }
+
+        .step-label.completed {
+            color: var(--accent-green-text);
+        }
+
+        .step-connector {
+            width: 32px;
+            height: 2px;
+            background: var(--border-light);
+            margin: 0 6px;
+            border-radius: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .step-connector.completed {
+            background: var(--accent-green);
+        }
+
+        /* Hero */
+        .hero {
+            text-align: center;
+            padding: 8px 24px 24px;
+        }
+
+        .hero-icon {
+            width: 72px;
+            height: 72px;
+            background: var(--orgbyte-blue);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: var(--shadow-md);
+            position: relative;
+        }
+
+        .hero-icon::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: var(--radius-xl);
+            border: 2px solid rgba(37, 99, 235, 0.08);
+            animation: pulse-ring 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse-ring {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.5; }
+        }
+
+        .hero-icon svg {
+            width: 32px;
+            height: 32px;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+            margin-bottom: 10px;
+            line-height: 1.25;
+        }
+
+        .hero p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            max-width: 280px;
+            margin: 0 auto 20px;
+        }
+
+        .trust-chips {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            padding: 6px 12px;
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .chip svg {
+            width: 12px;
+            height: 12px;
+            flex-shrink: 0;
+        }
+
+        .chip.green svg {
+            color: var(--accent-green);
+        }
+
+        .chip.blue svg {
+            color: var(--orgbyte-blue);
+        }
+
+        .chip.amber svg {
+            color: var(--accent-amber);
+        }
+
+        /* Section */
+        .section {
+            padding: 0 20px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            padding-left: 4px;
+        }
+
+        /* Cards Row - 3 visible */
+        .cards-row {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            padding: 4px;
+            margin: -4px;
+        }
+
+        .cards-row::-webkit-scrollbar {
+            display: none;
+        }
+
+        .cards-row.three-visible {
+            overflow-x: visible;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            padding: 0;
+            margin: 0;
+        }
+
+        .cards-row.three-visible .card-mini {
+            flex: none;
+            padding: 14px 10px;
+        }
+
+        .cards-row.three-visible .card-mini h3 {
+            font-size: 11px;
+        }
+
+        .cards-row.three-visible .card-mini p {
+            font-size: 10px;
+        }
+
+        .card-mini {
+            flex: 0 0 140px;
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-subtle);
+            transition: var(--transition-base);
+        }
+
+        .card-mini:active {
+            transform: scale(0.97);
+        }
+
+        .card-mini-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .card-mini-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .card-mini-icon.green {
+            background: var(--accent-green-bg);
+            color: var(--accent-green-text);
+        }
+
+        .card-mini-icon.blue {
+            background: var(--orgbyte-blue-light);
+            color: var(--orgbyte-blue);
+        }
+
+        .card-mini-icon.amber {
+            background: var(--accent-amber-bg);
+            color: var(--accent-amber);
+        }
+
+        .card-mini h3 {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 3px;
+        }
+
+        .card-mini p {
+            font-size: 10px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        /* Learn More Section */
+        .learn-more-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-subtle);
+            overflow: hidden;
+        }
+
+        .learn-more-toggle {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: none;
+            border: none;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--orgbyte-blue);
+            text-align: left;
+            cursor: pointer;
+            -webkit-appearance: none;
+            transition: var(--transition-base);
+        }
+
+        .learn-more-toggle:active {
+            background: var(--border-subtle);
+        }
+
+        .learn-more-toggle svg {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            transition: var(--transition-base);
+            color: var(--orgbyte-blue);
+        }
+
+        .learn-more-card.open .learn-more-toggle svg {
+            transform: rotate(180deg);
+        }
+
+        .learn-more-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height var(--transition-slow), padding var(--transition-base);
+        }
+
+        .learn-more-card.open .learn-more-content {
+            max-height: 2000px;
+            padding: 0 20px 20px;
+        }
+
+        /* Info Card inside Learn More */
+        .info-card {
+            background: var(--bg-body);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .info-card-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-card-title svg {
+            width: 16px;
+            height: 16px;
+            color: var(--orgbyte-blue);
+        }
+
+        .info-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-item-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: var(--orgbyte-blue-light);
+            color: var(--orgbyte-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .info-item-icon svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .info-item-text h4 {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1px;
+        }
+
+        .info-item-text p {
+            font-size: 11px;
+            color: var(--text-tertiary);
+        }
+
+        /* Never Collect Card inside Learn More */
+        .never-card {
+            background: var(--accent-green-bg);
+            border: 1px solid rgba(16, 185, 129, 0.15);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-bottom: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .never-card::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            width: 80px;
+            height: 80px;
+            background: rgba(16, 185, 129, 0.06);
+            border-radius: 50%;
+        }
+
+        .never-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .never-header-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--accent-green);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .never-header-icon svg {
+            width: 16px;
+            height: 16px;
+            color: white;
+        }
+
+        .never-header h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent-green-text);
+        }
+
+        .never-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px 12px;
+        }
+
+        .never-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--accent-green-text);
+        }
+
+        .never-item svg {
+            width: 12px;
+            height: 12px;
+            flex-shrink: 0;
+        }
+
+        .never-note {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(16, 185, 129, 0.12);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--accent-green-text);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .never-note svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Window Card inside Learn More */
+        .window-card {
+            background: var(--bg-body);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .window-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 16px;
+            right: 16px;
+            height: 3px;
+            background: var(--orgbyte-blue);
+            border-radius: 0 0 3px 3px;
+        }
+
+        .window-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .window-header-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--accent-amber-bg);
+            color: var(--accent-amber);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .window-header-icon svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .window-header h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .window-time {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: white;
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            margin-bottom: 10px;
+        }
+
+        .window-time-block {
+            text-align: center;
+        }
+
+        .window-time-block .time {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .window-time-block .label {
+            font-size: 10px;
+            color: var(--text-tertiary);
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
+        .window-arrow {
+            color: var(--text-tertiary);
+        }
+
+        .window-arrow svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .window-details {
+            display: flex;
+            gap: 8px;
+        }
+
+        .window-detail {
+            flex: 1;
+            background: white;
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .window-detail .value {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .window-detail .label {
+            font-size: 10px;
+            color: var(--text-tertiary);
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
+        .window-note {
+            margin-top: 10px;
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-align: center;
+            font-weight: 500;
+        }
+
+        /* Trust Grid inside Learn More */
+        .trust-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .trust-card {
+            background: var(--bg-body);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            text-align: center;
+            transition: var(--transition-base);
+        }
+
+        .trust-card:active {
+            transform: scale(0.97);
+        }
+
+        .trust-card-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+        }
+
+        .trust-card-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .trust-card-icon.blue {
+            background: var(--orgbyte-blue-light);
+            color: var(--orgbyte-blue);
+        }
+
+        .trust-card-icon.green {
+            background: var(--accent-green-bg);
+            color: var(--accent-green-text);
+        }
+
+        .trust-card-icon.amber {
+            background: var(--accent-amber-bg);
+            color: var(--accent-amber);
+        }
+
+        .trust-card h4 {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .trust-card p {
+            font-size: 10px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        /* FAQ inside Learn More */
+        .faq-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .faq-item {
+            background: var(--bg-body);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            transition: var(--transition-base);
+        }
+
+        .faq-item.open {
+            background: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .faq-question {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: none;
+            border: none;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: left;
+            cursor: pointer;
+            -webkit-appearance: none;
+        }
+
+        .faq-question svg {
+            width: 16px;
+            height: 16px;
+            color: var(--text-tertiary);
+            flex-shrink: 0;
+            transition: var(--transition-base);
+        }
+
+        .faq-item.open .faq-question svg {
+            transform: rotate(180deg);
+            color: var(--orgbyte-blue);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height var(--transition-slow), padding var(--transition-base);
+        }
+
+        .faq-item.open .faq-answer {
+            max-height: 200px;
+            padding: 0 16px 14px;
+        }
+
+        .faq-answer p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Consent Section */
+        .consent-section {
+            padding: 0 20px;
+            margin-bottom: 16px;
+        }
+
+        .consent-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow-md);
+            border: 2px solid var(--border-light);
+            transition: var(--transition-base);
+        }
+
+        .consent-card.checked {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.08), var(--shadow-md);
+        }
+
+        .consent-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            cursor: pointer;
+        }
+
+        .checkbox {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            border: 2px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 1px;
+            transition: var(--transition-base);
+            position: relative;
+        }
+
+        .checkbox.checked {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+        }
+
+        .checkbox svg {
+            width: 16px;
+            height: 16px;
+            color: white;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: var(--transition-base);
+        }
+
+        .checkbox.checked svg {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .checkbox.checked::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 12px;
+            border: 2px solid rgba(16, 185, 129, 0.2);
+            animation: checkbox-pop 0.3s ease-out;
+        }
+
+        @keyframes checkbox-pop {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.3); opacity: 0; }
+        }
+
+        .consent-text h4 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+
+        .consent-text p {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            line-height: 1.5;
+        }
+
+        /* CTA */
+        .cta-section {
+            padding: 0 20px 24px;
+        }
+
+        .cta-button {
+            width: 100%;
+            padding: 16px 24px;
+            border-radius: var(--radius-lg);
+            border: none;
+            background: var(--accent-green);
+            color: white;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition-base);
+            position: relative;
+            overflow: hidden;
+            letter-spacing: -0.2px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+        }
+
+        .cta-button:disabled {
+            background: var(--border-light);
+            color: var(--text-tertiary);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .cta-button:not(:disabled):active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
+        }
+
+        .cta-button.success {
+            background: var(--accent-green-dark);
+            pointer-events: none;
+            box-shadow: none;
+        }
+
+        .cta-button .btn-text {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: var(--transition-base);
+        }
+
+        .cta-button.success .btn-text {
+            gap: 6px;
+        }
+
+        .cta-button .btn-loader {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--transition-base);
+        }
+
+        .cta-button.loading .btn-text {
+            opacity: 0;
+            transform: translateY(4px);
+        }
+
+        .cta-button.loading .btn-loader {
+            opacity: 1;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--text-primary);
+            color: white;
+            padding: 14px 20px;
+            border-radius: var(--radius-lg);
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: var(--shadow-lg);
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            transition: var(--transition-slow);
+            white-space: nowrap;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .toast svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            color: var(--accent-green);
+        }
+
+        /* Hide checkbox input */
+        input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 430px) {
+            body {
+                padding: 0;
+                background: var(--bg-body);
+            }
+            .phone-frame {
+                max-width: 100%;
+                border-radius: 0;
+                box-shadow: none;
+                min-height: 100vh;
+            }
+            .phone-frame::before,
+            .phone-frame::after {
+                display: none;
+            }
+            .scroll-container {
+                height: auto;
+                min-height: 100vh;
+            }
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <div class="phone-frame">
+        <div class="status-bar">
+            <span>9:41</span>
+            <div class="status-icons">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+            </div>
+        </div>
+
+        <div class="scroll-container">
+            <!-- Header -->
+            <div class="header">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                    </div>
+                    <span class="logo-text">Keepdots</span>
+                </div>
+                <div class="secure-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Secure
+                </div>
+            </div>
+
+            <!-- Stepper -->
+            <div class="stepper">
+                <div class="step">
+                    <div class="step-circle completed">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <span class="step-label completed">Review</span>
+                </div>
+                <div class="step-connector completed"></div>
+                <div class="step">
+                    <div class="step-circle active">2</div>
+                    <span class="step-label active">Consent</span>
+                </div>
+                <div class="step-connector"></div>
+                <div class="step">
+                    <div class="step-circle pending">3</div>
+                    <span class="step-label">Verify</span>
+                </div>
+            </div>
+
+            <!-- Hero -->
+            <div class="hero">
+                <div class="hero-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <h1>Verify Your Address Securely</h1>
+                <p>Confirm your residential address using trusted device signals. No documents, uploads, or manual reviews required.</p>
+                <div class="trust-chips">
+                    <div class="chip green">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                        AES-256 Encrypted
+                    </div>
+                    <div class="chip blue">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                        NDPA Compliant
+                    </div>
+                    <div class="chip amber">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        Consent-Based
+                    </div>
+                    <div class="chip green">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        Privacy Protected
+                    </div>
+                </div>
+            </div>
+
+            <!-- What Happens -->
+            <div class="section">
+                <div class="section-title">What Happens</div>
+                <div class="cards-row three-visible">
+                    <div class="card-mini">
+                        <div class="card-mini-icon blue">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                        </div>
+                        <h3>Grant Consent</h3>
+                        <p>You authorize verification</p>
+                    </div>
+                    <div class="card-mini">
+                        <div class="card-mini-icon blue">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </div>
+                        <h3>Passive Collection</h3>
+                        <p>Signals collected during approved hours only</p>
+                    </div>
+                    <div class="card-mini">
+                        <div class="card-mini-icon green">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <h3>Verification Complete</h3>
+                        <p>Collection stops automatically</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Learn More -->
+            <div class="section">
+                <div class="learn-more-card" id="learnMoreCard">
+                    <button class="learn-more-toggle" id="learnMoreToggle">
+                        Learn more about what we collect
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="learn-more-content">
+                        <!-- What We Collect -->
+                        <div class="info-card">
+                            <div class="info-card-title">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                                What We Collect
+                            </div>
+                            <div class="info-list">
+                                <div class="info-item">
+                                    <div class="info-item-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                    </div>
+                                    <div class="info-item-text">
+                                        <h4>Location signals</h4>
+                                        <p>General area, not precise GPS</p>
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-item-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                                    </div>
+                                    <div class="info-item-text">
+                                        <h4>Network signals</h4>
+                                        <p>Wi-Fi and cellular metadata</p>
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-item-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/></svg>
+                                    </div>
+                                    <div class="info-item-text">
+                                        <h4>Device presence</h4>
+                                        <p>Active usage indicators</p>
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-item-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                    </div>
+                                    <div class="info-item-text">
+                                        <h4>Verification timestamps</h4>
+                                        <p>Time of signal collection</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- What We Never Collect -->
+                        <div class="never-card">
+                            <div class="never-header">
+                                <div class="never-header-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                </div>
+                                <h3>What We Never Collect</h3>
+                            </div>
+                            <div class="never-grid">
+                                <div class="never-item">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    Photos
+                                </div>
+                                <div class="never-item">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    Videos
+                                </div>
+                                <div class="never-item">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    Messages
+                                </div>
+                                <div class="never-item">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    Contacts
+                                </div>
+                                <div class="never-item">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    Files
+                                </div>
+                                <div class="never-item">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    Browsing history
+                                </div>
+                                <div class="never-item">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    Microphone
+                                </div>
+                                <div class="never-item">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    Camera content
+                                </div>
+                            </div>
+                            <div class="never-note">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                No documents or utility bills required
+                            </div>
+                        </div>
+
+                        <!-- Collection Window -->
+                        <div class="window-card">
+                            <div class="window-header">
+                                <div class="window-header-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                </div>
+                                <h3>Collection Window</h3>
+                            </div>
+                            <div class="window-time">
+                                <div class="window-time-block">
+                                    <div class="time">8:00 PM</div>
+                                    <div class="label">Start</div>
+                                </div>
+                                <div class="window-arrow">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                                </div>
+                                <div class="window-time-block">
+                                    <div class="time">5:00 AM</div>
+                                    <div class="label">End</div>
+                                </div>
+                            </div>
+                            <div class="window-details">
+                                <div class="window-detail">
+                                    <div class="value">3–5 Days</div>
+                                    <div class="label">Duration</div>
+                                </div>
+                                <div class="window-detail">
+                                    <div class="value">Auto-stop</div>
+                                    <div class="label">After verify</div>
+                                </div>
+                            </div>
+                            <div class="window-note">Collection automatically ends after verification</div>
+                        </div>
+
+                        <!-- Privacy Guarantee -->
+                        <div class="trust-grid">
+                            <div class="trust-card">
+                                <div class="trust-card-icon blue">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                                </div>
+                                <h4>Encryption</h4>
+                                <p>AES-256 at rest & in transit</p>
+                            </div>
+                            <div class="trust-card">
+                                <div class="trust-card-icon green">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                </div>
+                                <h4>Revocable</h4>
+                                <p>Withdraw anytime instantly</p>
+                            </div>
+                            <div class="trust-card">
+                                <div class="trust-card-icon amber">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+                                </div>
+                                <h4>Secure Storage</h4>
+                                <p>Isolated encrypted vaults</p>
+                            </div>
+                            <div class="trust-card">
+                                <div class="trust-card-icon blue">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                                </div>
+                                <h4>NDPA Compliant</h4>
+                                <p>Certified data protection</p>
+                            </div>
+                        </div>
+
+                        <!-- FAQ -->
+                        <div class="faq-list">
+                            <div class="faq-item">
+                                <button class="faq-question">
+                                    How does passive verification work?
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                                </button>
+                                <div class="faq-answer">
+                                    <p>We analyze anonymized device signals like network connectivity patterns and general location metadata during your usual overnight hours. No action is required from you.</p>
+                                </div>
+                            </div>
+                            <div class="faq-item">
+                                <button class="faq-question">
+                                    Can I revoke my consent?
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                                </button>
+                                <div class="faq-answer">
+                                    <p>Yes. You can withdraw consent at any time from your account settings. All collected data will be deleted within 24 hours of revocation.</p>
+                                </div>
+                            </div>
+                            <div class="faq-item">
+                                <button class="faq-question">
+                                    How long is data stored?
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                                </button>
+                                <div class="faq-answer">
+                                    <p>Verification data is retained for 90 days after successful verification, then permanently deleted. You may request earlier deletion at any time.</p>
+                                </div>
+                            </div>
+                            <div class="faq-item">
+                                <button class="faq-question">
+                                    What if verification fails?
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                                </button>
+                                <div class="faq-answer">
+                                    <p>If signals are insufficient, we'll notify you and offer alternative verification methods. No penalty or service interruption occurs.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Consent -->
+            <div class="consent-section">
+                <div class="consent-card" id="consentCard">
+                    <label class="consent-label" for="consentCheck">
+                        <input type="checkbox" id="consentCheck">
+                        <div class="checkbox" id="checkboxVisual">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div class="consent-text">
+                            <h4>I understand what information will be collected and I consent to address verification.</h4>
+                            <p>Your consent is voluntary and can be withdrawn at any time.</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- CTA -->
+            <div class="cta-section">
+                <button class="cta-button" id="ctaButton" disabled>
+                    <span class="btn-text">
+                        Grant Consent & Continue
+                    </span>
+                    <span class="btn-loader">
+                        <div class="spinner"></div>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-container">
+        <div class="toast" id="toast">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Consent recorded successfully
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const consentCheck = document.getElementById('consentCheck');
+            const checkboxVisual = document.getElementById('checkboxVisual');
+            const consentCard = document.getElementById('consentCard');
+            const ctaButton = document.getElementById('ctaButton');
+            const toast = document.getElementById('toast');
+            const learnMoreCard = document.getElementById('learnMoreCard');
+            const learnMoreToggle = document.getElementById('learnMoreToggle');
+            const faqItems = document.querySelectorAll('.faq-item');
+
+            // Checkbox toggle
+            consentCheck.addEventListener('change', function() {
+                if (this.checked) {
+                    checkboxVisual.classList.add('checked');
+                    consentCard.classList.add('checked');
+                    ctaButton.disabled = false;
+                } else {
+                    checkboxVisual.classList.remove('checked');
+                    consentCard.classList.remove('checked');
+                    ctaButton.disabled = true;
+                }
+            });
+
+            // Visual checkbox click (for label)
+            checkboxVisual.addEventListener('click', function(e) {
+                e.preventDefault();
+                consentCheck.checked = !consentCheck.checked;
+                consentCheck.dispatchEvent(new Event('change'));
+            });
+
+            // CTA click
+            ctaButton.addEventListener('click', function() {
+                if (this.disabled || this.classList.contains('success')) return;
+
+                // Loading state
+                this.classList.add('loading');
+                this.disabled = true;
+
+                setTimeout(() => {
+                    this.classList.remove('loading');
+                    this.classList.add('success');
+                    this.innerHTML = '<span class="btn-text"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Consent Recorded</span>';
+
+                    // Show toast
+                    toast.classList.add('show');
+                    setTimeout(() => {
+                        toast.classList.remove('show');
+                    }, 3000);
+                }, 1200);
+            });
+
+            // Learn More toggle
+            learnMoreToggle.addEventListener('click', function() {
+                learnMoreCard.classList.toggle('open');
+            });
+
+            // FAQ accordion
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question');
+                question.addEventListener('click', function() {
+                    const isOpen = item.classList.contains('open');
+                    faqItems.forEach(i => i.classList.remove('open'));
+                    if (!isOpen) {
+                        item.classList.add('open');
+                    }
+                });
+            });
+        })();
+    </script>
+</body>
+</html>
